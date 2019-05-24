@@ -1,0 +1,40 @@
+;MaxonCPP-Project
+
+<Project-Options>
+-dir "Text:HiSOFT_C/projects/NetWor/" -args "" -stack 10 -pri 0
+<End>
+
+
+<Linker-Options>
+-gD -gl -gh80 -w500 
+-j "PROGDIR:amiga/mcpp-libs/" 
+<End>
+
+<C-Options>
+-wACEFNMOPRTV -pp -g30 -g80 -gO -gb0 -gm -bs0 -a0 -t -pX -b -mX 
+-i "PROGDIR:amiga/c-inc/" 
+-i "PROGDIR:amiga/easyobjects/" 
+<End>
+
+<ASM-Options>
+-c cWSElMo0F -0xff 
+<End>
+
+
+<CSources>
+"ChapEd.c" "ChapEd.o"
+<End>
+
+<CIncludes>
+"ChunkyLib.h"
+"CE_Master.h"
+<End>
+
+<AsmSources>
+"ChunkyLib.s" "ChunkyLib.o"
+<End>
+
+<LinkLibs>
+"PROGDIR:amiga/c-libs/amiga.lib"
+<End>
+

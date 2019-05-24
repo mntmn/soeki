@@ -1,0 +1,62 @@
+;MaxonCPP-Project
+
+<Project-Options>
+-dir "" -args "" -stack 20 -pri 0
+<End>
+
+
+<Linker-Options>
+-gD -gl -gh80 -w1000 
+-j "PROGDIR:amiga/mcpp-libs/" 
+<End>
+
+<C-Options>
+-wACEFNMOPRTV -pp -g40 -g80 -gO -gb0 -gm -bs0 -a0 -t -pX -b 
+-i "PROGDIR:amiga/c-inc/" 
+-i "PROGDIR:amiga/easyobjects/" 
+<End>
+
+<ASM-Options>
+-c CWselMo4f -0xff 
+-i "PROGDIR:amiga/asm-inc/" 
+<End>
+
+
+<CSources>
+"Text:HiSOFT_C/projects/NetWor/Networ.c" "Text:HiSOFT_C/projects/NetWor/Networ.o"
+	<Dependencies>
+		"Text:HiSOFT_C/projects/NetWor/bbgoutextri.h"
+		"Text:HiSOFT_C/projects/NetWor/ChunkyLib.h"
+		"Text:HiSOFT_C/projects/NetWor/Networ.c"
+		"Text:HiSOFT_C/projects/NetWor/NW_Master.h"
+	<End>
+<End>
+
+<CIncludes>
+"Text:HiSOFT_C/projects/NetWor/ChunkyLib.h"
+"Text:HiSOFT_C/projects/NetWor/NW_Master.h"
+"Text:HiSOFT_C/projects/NetWor/bbgoutextri.h"
+<End>
+
+<AsmSources>
+"Text:HiSOFT_C/projects/NetWor/ChunkyLib.s" "Text:HiSOFT_C/projects/NetWor/ChunkyLib.o"
+	<ASM-Options>
+		-c c 
+	<End>
+"Work:Programme/CODING/HiSOFT_C/projects/NetWor/bbgoutextri.s" "Work:Programme/CODING/HiSOFT_C/projects/NetWor/bbgoutextri.o"
+	<ASM-Options>
+		-c s 
+	<End>
+	<Object>
+		-pri 5
+	<End>
+<End>
+
+<Executable>
+"Work:Programme/CODING/HiSOFT_C/projects/nw1.exe"
+<End>
+
+<LinkLibs>
+"PROGDIR:amiga/c-libs/amiga.lib"
+<End>
+
