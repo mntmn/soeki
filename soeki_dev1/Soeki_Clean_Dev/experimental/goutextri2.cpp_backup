@@ -1,0 +1,287 @@
+
+// Written by the mighty Alpha of Vortex
+// Fix, Cleanup and Coffee consume started on 22.8.99 at 4:00 in the night by L.Hartmann / Atomatrix
+// First working version done on 22.8.99 at 14:28. I'm a hero =) [Not really]
+// Slept 3 hours + 3 hours pause.
+// Copyright 1999 Atomatrix Entertainment
+// www.atomatrix.com
+
+// * Note: Please don't ask me about internal math details. That's why I can't optimize this
+// myself...
+// Sorry for bad english in the translated comments
+
+// * Target:
+// Triangle() ought to achieve at least 10 fps with 200-400 triangles on a 166 Mhz machine.
+
+// * Your contact: atomatrix@gmx.de (Lukas Hartmann)
+
+#include <TranslationKit.h>
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
+
+class AlphasMagic
+{
+		int multab2[256][256];
+	public:
+		uint32* array;       // Output buffer, 32-bit
+		uint32* array_tex1;  // Texture buffer, 32-bit, 256*256 pixels
+		AlphasMagic();
+		void MakeTable();
+		inline void TriTexGouLine(float x1, float x2, float y, float tx1, float tx2, float ty1, float ty2, float g1, float g2);
+		void Triangle(float dataa[], float datab[], float datac[]);
+		void Clear();
+		
+		// The following stuff could be used for simply loading a jpg texture or something
+		BBitmap* TextureBitmap;
+		BTranslationUtils* TextureTrans;
+};
+
+void AlphasMagic::Clear()
+{
+	for (int i=0;i<SCREEN_WIDTH*SCREEN_HEIGHT;i++) *(array+i)=0xffffff;
+};
+
+AlphasMagic::AlphasMagic()
+{	
+};
+
+//-----------------------------------------------
+// - A multiplication table is needed for the following GouTexTri-Routine.
+// - The original color (R-, G- or B-value) for brightness values 0 to 127 
+//   is calculated ranging from black to full color.
+// - Values 128-255 are brighter shades of the color, i.e. up to total white.
+// - This makes complete 24-bit Gouraud with 256 shades of brightness possible.
+
+void AlphasMagic::MakeTable()
+{
+		// x*2 is the original value of the color, y ranges from 0 to 255
+		// and shifting it by 8 makes it range 0 to 1.0
+        for(int x=0;x<128;x++)  //Brightness is converted to 0 to 254
+          for(int y=0;y<256;y++) //Color
+            multab2[x][y]=((x*2)*y)>>8;
+
+        for(int x=0;x<128;x++) //No brightness conversion to 0 to 254 anymore, 
+        					   //we just divide dif into 127 parts
+
+          for(int y=0;y<256;y++)
+          {
+            float dif=((long)256-(float)y)/(long)127;
+            int erg=(int)((float)y+dif*(float)x);
+            if(erg>255)erg=255;
+            if(erg<0)erg=0;
+            multab2[128+x][y]=erg;
+          }
+};
+
+// Function for a single line of the triangle
+
+void AlphasMagic::TriTexGouLine(float x1, float x2, float y, float tx1, float tx2, float ty1, float ty2, float g1, float g2)
+{
+		// Round to ensure that problems caused by rounding errors don't occur (jumping lines)
+        x2=floor(x2);
+        x1=floor(x1);
+
+		// Sort values to make drawing from left to right possible
+        if(x2<x1)
+        {
+            float temp=x2;x2=x1;x1=temp;
+            temp=tx2;tx2=tx1;tx1=temp;
+            temp=ty2;ty2=ty1;ty1=temp;
+            temp=g2;g2=g1;g1=temp;
+        }
+
+        float xdelta=x2-x1;
+        if(xdelta<1.0) return;
+
+        int xd=(int)xdelta;
+
+		//Calculate start Tex-X and Tex-X-Increment
+        int txi=(int)(tx1*65535); //fixed point
+        float txd=(tx2-tx1)/xdelta;
+        int txdi=(int)(txd*65535); //same here
+
+        //Same for Tex-Y and Tex-Y-Increment
+        int tyi=(int)(ty1*65535); //fixed point
+        float tyd=(ty2-ty1)/xdelta;
+        int tydi=(int)(tyd*65535); //same here
+
+        //Gouraud
+        int gi=(int)(g1*65535); //fixed point
+        float gd=(g2-g1)/xdelta;
+        int gdi=(int)(gd*65535); //same here
+
+//Clipping begin
+//If line isn't inside screen -> outta here
+        if((x1>SCREEN_WIDTH-1)||(x2<0))return;
+/*If the line is clipped at the left screen border (where we start), the left out
+gouraud and texture steps have to be calculated; x is set to 0 */
+        if(x1<0)
+        {
+            int xm=(int)(-x1);
+            gi+=gdi*xm;
+            x1=0;
+        }
+/* x is simply clipped at the right border. That's where the loop is going to end
+then */
+        if(x2>SCREEN_WIDTH-1)x2=SCREEN_WIDTH-1;
+//End of clipping and calculation of screen start address
+        int arrayptr=(int)(y)*SCREEN_WIDTH+(int)(x1);
+
+//Recalculate X-Delta because of clipping
+        xdelta=x2-x1;
+        if(xdelta<=0)return;
+        xd=(int)(xdelta);
+
+        int r;
+        int g;
+        int b;
+        int pix;
+        int gou;
+		int* mtab;
+
+        for(int x=0;x<=xd;x++)
+        {
+		//Fetch a pixel from the texture (256*256)
+          pix=array_tex1[(txi>>16)+((tyi>>8)&0xff00)];
+        //Point to the right 256-values range of multiplication table
+          mtab=multab2[gi>>16];
+          r=*(mtab+((pix&0x00ff0000)>>16));
+          g=*(mtab+((pix&0x0000ff00)>>8));
+          b=*(mtab+((pix&0x000000ff)));
+		//Construct and write 24-bit value
+          *(array+(arrayptr++))=(r<<16)|(g<<8)|b;
+        
+        //Increase Texture- and Gouraud-counter
+          txi+=txdi;
+          tyi+=tydi;
+          gi+=gdi;
+        }
+    }
+
+
+// Here comes the action
+
+/*
+ Coordinates are passed on in the 3 arrays (float)
+ [0]=x
+ [1]=y
+ [2]=z
+ [3]=texture_x 0-256
+ [4]=texture_y 0-256
+ [5]=gouraud-Wert (brightness) 0-256
+*/
+
+void AlphasMagic::Triangle(float dataa[], float datab[], float datac[])
+{
+    float midx1, midx2, midy, texincx, texincy;
+    float xs1,xs2,xs3,txs1,txs2,txs3,tys1,tys2,tys3,gs1,gs2,gs3;
+    float* tempdata;
+
+  // Very simple sorting of the three y coordinates
+  if(dataa[1]>datab[1]){tempdata=dataa;dataa=datab;datab=tempdata;}
+  if(datab[1]>datac[1]){tempdata=datab;datab=datac;datac=tempdata;}
+  if(dataa[1]>datab[1]){tempdata=dataa;dataa=datab;datab=tempdata;}
+
+  // Calculate some deltas 
+  float xd1=datab[0]-dataa[0];
+  float xd2=datac[0]-dataa[0];
+  float xd3=datac[0]-datab[0];
+  float yd1=datab[1]-dataa[1];
+  float yd2=datac[1]-dataa[1];
+  float yd3=datac[1]-datab[1];
+  float txd1=datab[3]-dataa[3];
+  float txd2=datac[3]-dataa[3];
+  float txd3=datac[3]-datab[3];
+  float tyd1=datab[4]-dataa[4];
+  float tyd2=datac[4]-dataa[4];
+  float tyd3=datac[4]-datab[4];
+  float gd1=datab[5]-dataa[5];
+  float gd2=datac[5]-dataa[5];
+  float gd3=datac[5]-datab[5];
+
+  // Calculate steps per line while taking care of division by 0
+  if(yd1!=0)
+  {xs1=xd1/yd1;txs1=txd1/yd1;tys1=tyd1/yd1;gs1=gd1/yd1;}
+  else
+  {xs1=xd1;txs1=txd1;tys1=tyd1;gs1=gd1;}
+  if(yd2!=0)
+  {xs2=xd2/yd2;txs2=txd2/yd2;tys2=tyd2/yd2;gs2=gd2/yd2;}
+  else
+  {xs2=xd2;txs2=txd2;tys2=tyd2;gs2=gd2;}
+  if(yd3!=0)
+  {xs3=xd3/yd3;txs3=txd3/yd3;tys3=tyd3/yd3;gs3=gd3/yd3;}
+  else
+  {xs3=xd3;txs3=txd3;tys3=tyd3;gs3=gd3;}
+
+  /*
+     Variable meanings:
+     
+     xs? xstep=delta x
+     txs? delta tx
+     tys? delta ty
+     xd? xdelta
+     yd? dunno
+     txd?  "
+     tyd?  "
+     xw? current x-value used in loop
+     txw? for tx
+     tyw? for ty
+
+  */
+
+  /*
+   Start values for the first part (up to y of point 2)
+   xw1 and xw2 are x-values for the current line. The triangle is drawn from
+   top to bottom line after line...
+   txw, tyw and gw are values for texture and brightness
+   always for start- and ending-point of the current line
+   A line is also called "Span".
+  */
+
+  float xw1=dataa[0]; //pax
+  float xw2=dataa[0];
+  float txw1=dataa[3]; //tax
+  float txw2=dataa[3];
+  float tyw1=dataa[4]; //tay
+  float tyw2=dataa[4];
+  float gw1=dataa[5]; //gou
+  float gw2=dataa[5];
+  if(abs(datab[1]-dataa[1])>=(float)1) //If Span-height 1 or higher
+  //sz = y = line
+  for(int sz=(int)dataa[1];sz<=(int)datab[1];sz++)
+  {
+    // draw if y is inside the screen (clipping)
+   
+if((sz>=0)&(sz<SCREEN_HEIGHT)){TriTexGouLine(xw1,xw2,(float)sz,txw1,txw2,tyw1,tyw2,gw1,gw2);}
+    xw1+=xs1;
+    xw2+=xs2;
+    txw1+=txs1;
+    txw2+=txs2;
+    tyw1+=tys1;
+    tyw2+=tys2;
+    gw1+=gs1;
+    gw2+=gs2;
+  }
+  /*
+   New start values for the second part of the triangle
+  */
+  xw1=datab[0]+xs3;
+  txw1=datab[3]+txs3;
+  tyw1=datab[4]+tys3;
+  gw1=datab[5]+gs3;
+  if(abs(datab[1]-datac[1])>=1) //If Span-Height 1 or higher
+  for(int sz=(int)(datab[1])+1;sz<(int)datac[1];sz++)
+  {
+    if((sz>=0)&(sz<SCREEN_HEIGHT)){TriTexGouLine(xw1,xw2,(float)sz,txw1,txw2,tyw1,tyw2,gw1,gw2);}
+    xw1+=xs3;
+    xw2+=xs2;
+    txw1+=txs3;
+    txw2+=txs2;
+    tyw1+=tys3;
+    tyw2+=tys2;
+    gw1+=gs3;
+    gw2+=gs2;
+  }
+};
+
+// Phew!

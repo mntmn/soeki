@@ -1,0 +1,62 @@
+Atomatrix - SOEKI THE PLAGUE
+--------------------------------------------------------------------------------------------------
+These Files are strictly confidental and may not be shown or given to
+the public.
+All content is copyright 1999 Atomatrix,
+Graphics by Damir Jurina, Simon Evans
+Code and Design by Lukas Hartmann, Matthias Waldhauer.
+--------------------------------------------------------------------------------------------------
+
+Hi!
+
+Build 24022000 Instructions:
+
+First Networking Stuff implemented!
+
+Please test landscape editing in "Join Game" mode with a loopback
+connection *only*!
+
+Note that the net stuff is in a very early and untested stage. A lot
+of things will be very buggy.
+
+Attacking etc. is disabled. The blocking-map gets cluttered up after
+a while, so unit collosion doesn't work right in this release.
+
+Usage (from Terminal):
+
+Soeki [server ip (defaults to 127.0.0.1, i.e. loopback)]
+
+--------------------------------------------------------------------------------------------------
+
+Build 15012000 Instructions:
+
+- Added Keyboard support. Supported Keys (As I remember them):
+
+	- s		Saves height (and light?) data to map/MapShot.dat
+	- l		Same as above, only loads
+	- g		Toggles Z-Buffer display mode (funky)
+	- q		Quits (no more qualifier hacking)
+	- Ctrl		Forces Attack (Hold strg and click on another unit to
+						let em fire)
+	- t		Toggles texture to be applied (in Editmode)
+	- m		Toggles landscape manipulator (experiment!)
+
+- Smooth (semi-smooth) scrolling. Diagonal even works in some
+  lucky cases!
+
+--------------------------------------------------------------------------------------------------
+General Instructions (from the original alpha version):
+
+To work correctly, place this folder to:
+
+/boot/home/code/ 
+(please create those folders if necessary)
+
+And start "Soeki" in the soeki folder either via Tracker, or better,
+a Terminal window.
+
+Please always bear in mind that this is just a bug-drenched development
+version and in no way showing anything final.
+
+Regards,
+Lukas Hartmann

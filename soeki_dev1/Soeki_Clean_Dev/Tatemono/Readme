@@ -1,0 +1,6 @@
+Atomatrix - Tatemono
+
+1. Create a folder in the Soeki directory called "Tatemono" (case sensitive!)
+2. Place the BeApp file into that folder
+3. Place the recycbay_s.amxc into /Soeki/gfx (That's the shadow file)
+4. Start BeApp :)
