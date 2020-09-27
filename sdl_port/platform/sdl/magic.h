@@ -3,6 +3,7 @@
 #define SOEKI_MAGIC
 
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef struct TriangleDef
 {
